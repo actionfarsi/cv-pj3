@@ -42,10 +42,20 @@ void ImgView::sameXY()
 
 	// See the lecture note on measuring heights
 	// using a known point directly below the new point.
+	double t_b = (knownPoint.u-newPoint.u)*(knownPoint.u-newPoint.u) +
+				 (knownPoint.v-newPoint.v)*(knownPoint.v-newPoint.v);
+	double r_b = (knownPoint.u-refPointOffPlane->u)*(knownPoint.u-refPointOffPlane->u) +
+				 (knownPoint.v-refPointOffPlane->v)*(knownPoint.v-refPointOffPlane->v);
+	double v_r = (zVanish.u-refPointOffPlane->u)*(zVanish.u-refPointOffPlane->u) +
+				 (zVanish.v-refPointOffPlane->v)*(zVanish.v-refPointOffPlane->v);
+	double v_t = (zVanish.u-newPoint.u)*(zVanish.u-newPoint.u) +
+				 (zVanish.v-newPoint.v)*(zVanish.v-newPoint.v);
+	double h = sqrt(t_b/r_b * v_r/ v_t) * referenceHeight;
 
-	printf("sameXY() to be implemented!\n");
-	fl_message("sameXY() to be implemented!\n");
-
+	newPoint.X = knownPoint.X;
+	newPoint.Y = knownPoint.Y;
+	newPoint.Z = h;
+	newPoint.W = 1;
 	/******** END TODO ********/
 
 	newPoint.known(true);
