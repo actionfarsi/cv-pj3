@@ -94,8 +94,36 @@ void ImgView::sameZPlane()
 	}
 
 	/******** BEGIN TODO ********/
-	printf("sameZPlane() to be implemented!\n");
-	fl_message("sameZPlane() to be implemented!\n");
+	Vec3d nP = Vec3d(newPoint.u, newPoint.v, newPoint.w);
+	Vec3d kP = Vec3d(knownPoint.u, knownPoint.v, knownPoint.w);
+
+	Vec3d b1 = Vec3d(newPoint.u, newPoint.v, newPoint.w);
+
+	if (knownPoint.Z != 0){
+		Vec3d xV = Vec3d(xVanish.u, xVanish.v, xVanish.w);
+		Vec3d yV = Vec3d(yVanish.u, yVanish.v, yVanish.w);
+		Vec3d zV = Vec3d(zVanish.u, zVanish.v, zVanish.w);
+
+		// Vertical Line passing though newpoint	
+		Vec3d vLine = cross(nP, zV);
+		// Horizon
+		Vec3d horizonL = cross(xV, yV);
+		// Vanishing point
+		Vec3d vL = cross(cross(nP, kP), horizonL);
+		// 
+		Mat3d Hinv = Mat3d(Hinv);
+		Vec3d b0 = Hinv * Vec3d(knownPoint.X, knownPoint.Y, 0);
+		// Intersection between vertical line and vanishing line on reference plane
+		b1 = cross(cross(b0, vL), vLine);
+	}
+	// Use homography
+	Mat3d H = Mat3d(H);
+	nP = H * b1;
+	
+	newPoint.X = nP[0];
+	newPoint.Y = nP[1];
+	newPoint.Z = nP[2];
+	newPoint.W = 1;
 	
 	/******** END TODO ********/
 
