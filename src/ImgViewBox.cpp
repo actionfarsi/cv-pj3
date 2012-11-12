@@ -24,9 +24,20 @@ void ImgView::solveForOppositeCorners(double u0, double v0, double u2, double v2
     // Given the 2D positions of corners p0 and p2 of the face, compute the 2D positions of p1 and p3
     // Remember that this face is on a plane perpendicular to the plane x=0
     // Store the results in variables 'u1, v1' and 'u3, v3'
+	Vec3d p0 = Vec3d(u0,v0,1);
+	Vec3d p2 = Vec3d(u2,v2,1);
 
-printf("TODO: ImgViewBox.cpp:28\n"); 
-fl_message("TODO: ImgViewBox.cpp:28\n");
+	Vec3d xV = Vec3d(xVanish.u, xVanish.v, xVanish.w);
+	Vec3d yV = Vec3d(yVanish.u, yVanish.v, yVanish.w);
+	Vec3d zV = Vec3d(zVanish.u, zVanish.v, zVanish.w);
+	
+	Vec3d p1 = cross( cross(p0,xV), cross(p1,zV));
+	Vec3d p3 = cross( cross(p0,zV), cross(p1,xV));
+
+	u1 = p1[0]/p1[2];
+	u1 = p1[1]/p1[2];
+	u3 = p3[0]/p3[2];
+	u3 = p3[1]/p3[2];
 
     /********* END TODO ********/
 }
