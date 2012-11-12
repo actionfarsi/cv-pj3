@@ -75,9 +75,14 @@ void ImgView::solveForOppositeFace(SVMSweep *sweep, double imgX, double imgY,
     // Store the results in variables p4, p5, p6, and p7.
 	Vec3d p4, p5, p6, p7;
 
-printf("TODO: ImgViewBox.cpp:83\n"); 
-fl_message("TODO: ImgViewBox.cpp:83\n");
+	Vec3d xV = Vec3d(xVanish.u, xVanish.v, xVanish.w);
+	Vec3d yV = Vec3d(yVanish.u, yVanish.v, yVanish.w);
+	Vec3d zV = Vec3d(zVanish.u, zVanish.v, zVanish.w);
 
+	p4 = cross( cross(p0, yV), cross(pMouse,xV));
+	p5 = cross( cross(p1, yV), cross(pMouse,xV));
+	p6 = cross( cross(p2, yV), cross(p5,zV));
+	p7 = cross( cross(p3, yV), cross(p4,zV));
 
     /******** END TODO ********/
 
