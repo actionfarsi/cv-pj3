@@ -40,6 +40,7 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 	}
 
 	SVMPoint bestfit;
+	
 	list<SVMLine>::const_iterator iter;
 
 	// To accumulate stuff
@@ -74,22 +75,26 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 	}
 	Vec3d holder=Vec3d(0,0,0);
 	int first=0;
-	CTransform3x3 Tshift = CTransform3x3::Translation((float) -imgWidth/2, (float) -imgHeight/2);
+	int offsetW=imgWidth/2;
+	int offsetH=imgHeight/2;
+	//CTransform3x3 Tshift = CTransform3x3::Translation((float) -imgWidth/2, (float) -imgHeight/2);
 	for (iter = lines.begin(); iter != lines.end(); iter++) {
 	//1) specify each line's endpoints e1 and e2 in homogeneous coordinates
 		SVMPoint *e1,*e2;
-		//TODO: translate  by (-imageX/2, -imageY/2)
+		
 		e1=iter->pnt1;
 		e2=iter->pnt2;
-		
+		//printf("p1:[%f,%f]\n",e1->v,e1->u);
 		Vec3d p1=Vec3d(e1->u,e1->v,globalW);
-		
+		printf("p1:[%f,%f]\n",p1[0],p1[1]);
 		Vec3d p2=Vec3d(e2->u,e2->v,globalW);
+		//printf("p2:[%d,%d]\n",p2[0],p2[2]);
 	//2) compute a homogenous coordinate vector representing the line
    // as the cross product of its two endpoints
 		Vec3d c_result=cross(p1,p2);
 		
 		if(numLines==2){
+			//printf("two lines \n");
 			//check if first line
 			if(first==0){
 				//yes, so we keep current cross of I1
@@ -99,10 +104,14 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 				//now we have both lines
 				Vec3d twoline=cross(c_result,holder);
 				//divide by w, convert to svmpoint. bestfit is defined
-				bestfit=SVMPoint(twoline[0]/twoline[2],twoline[1]/twoline[2]);
+				
+				bestfit=SVMPoint(twoline[0]/twoline[2]*globalW,twoline[1]/twoline[2]*globalW);
+				printf("[%f,%f]\n",twoline[0],twoline[1]);
+				//printf("w:%d \n",twoline[1]);
 			}
 			
 		}else{
+		//	printf("not two lines \n");
 		//accumulate sums if more than two lines
 		M[1][1]+=c_result[0]*c_result[0];
 		M[1][2]+=c_result[0]*c_result[1];
@@ -118,6 +127,9 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 	}
 	
 	if(numLines!=2){
+		eigmatrix = nrmatrix(1,3,1,3);
+		eigenvec = nrvector(1,3);
+		mineigvec = nrvector(1,3);
 		//jacobi decomposition
 		jacobi(M, 3, eigenvec, eigmatrix, &rot);
 		//find smallest eigenvalues
@@ -131,13 +143,17 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 			mineig=eigenvec[3];
 			minid=3;
 		}
+		//printf("mineig:%d\n",mineig);
+		printf("eigvec: ");
 		for (i=0; i<3; i++) {
+
 		mineigvec[i] = eigmatrix[i+1][minid];
+		printf("%f\n",mineigvec[i]);
 		}
 
-		bestfit=SVMPoint(mineigvec[0]/mineigvec[2],mineigvec[1]/mineigvec[2]);
+		bestfit=SVMPoint(mineigvec[0]/mineigvec[2]*globalW,mineigvec[1]/mineigvec[2]*globalW);
 	}
-
+//printf("w:%d, h:%d\n",imgWidth,imgHeight); 
 //printf("TODO: svmmath.cpp:61\n"); 
 //fl_message("TODO: svmmath.cpp:61\n");
 
