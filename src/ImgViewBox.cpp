@@ -104,10 +104,46 @@ void ImgView::find3DPositionsBox(SVMPoint *points[8])
 	// you need to implement.  For that to work, you will need to push and pop points from
 	// pntSelStack.  There are multiple ways to implement this function.
 
-printf("TODO: ImgViewBox.cpp:120\n"); 
-fl_message("TODO: ImgViewBox.cpp:120\n");
+    //Anchor for the bottom plane
+	pntSelStack.push_back(points[0]);
 
+	//Bottom face
+	pntSelStack.push_back(points[1]);
+	sameZPlane();
+	pntSelStack.pop_back();
 
+	pntSelStack.push_back(points[4]);
+	sameZPlane();
+	pntSelStack.pop_back();
+
+	pntSelStack.push_back(points[5]);
+	sameZPlane();
+	pntSelStack.pop_back();
+
+	//Top Face
+	// point 0 already in the stack
+	pntSelStack.push_back(points[3]);
+	sameXY();
+	pntSelStack.pop_back();
+	pntSelStack.pop_back();
+
+	pntSelStack.push_back(points[1]);
+	pntSelStack.push_back(points[2]);
+	sameXY();
+	pntSelStack.pop_back();
+	pntSelStack.pop_back();
+
+	pntSelStack.push_back(points[5]);
+	pntSelStack.push_back(points[6]);
+	sameXY();
+	pntSelStack.pop_back();
+	pntSelStack.pop_back();
+
+	pntSelStack.push_back(points[4]);
+	pntSelStack.push_back(points[7]);
+	sameXY();
+	pntSelStack.pop_back();
+	pntSelStack.pop_back();
 	/********* END TODO ********/
 }
 
