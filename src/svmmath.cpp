@@ -44,10 +44,14 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 
 	// To accumulate stuff
 	typedef Matrix<double, Dynamic, 3, RowMajor> Matrix3;
-
+	//mineig defs
+	double **eigmatrix, *eigenvec, mineig, *mineigvec;
+	int rot;
+    int minid; //id for mineig
+	
 	int numLines = (int) lines.size();
 	Matrix3 A = Matrix3::Zero(numLines, 3);	
-
+	int globalW=(imgWidth+imgHeight)/4; //get average of width and height, then divide by 2 to get w
 	// Transformation for numerical stability
 
 	// Note: iterate through the lines list as follows:
@@ -58,11 +62,87 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 	//
 	/******** BEGIN TODO ********/
 
-printf("TODO: svmmath.cpp:61\n"); 
-fl_message("TODO: svmmath.cpp:61\n");
+	//define blank matrix M for best fit procedure
+	double **M = nrmatrix(1,3,1,3);
+	int i, j;
+	for (i=1; i<=3; i++)
+	{
+		for (j=1; j<=3; j++)
+		{
+			M[i][j] = 0;
+		}
+	}
+	Vec3d holder=Vec3d(0,0,0);
+	int first=0;
+	CTransform3x3 Tshift = CTransform3x3::Translation((float) -imgWidth/2, (float) -imgHeight/2);
+	for (iter = lines.begin(); iter != lines.end(); iter++) {
+	//1) specify each line's endpoints e1 and e2 in homogeneous coordinates
+		SVMPoint *e1,*e2;
+		//TODO: translate  by (-imageX/2, -imageY/2)
+		e1=iter->pnt1;
+		e2=iter->pnt2;
+		
+		Vec3d p1=Vec3d(e1->u,e1->v,globalW);
+		
+		Vec3d p2=Vec3d(e2->u,e2->v,globalW);
+	//2) compute a homogenous coordinate vector representing the line
+   // as the cross product of its two endpoints
+		Vec3d c_result=cross(p1,p2);
+		
+		if(numLines==2){
+			//check if first line
+			if(first==0){
+				//yes, so we keep current cross of I1
+				holder=c_result;
+				first=1;
+			}else{
+				//now we have both lines
+				Vec3d twoline=cross(c_result,holder);
+				//divide by w, convert to svmpoint. bestfit is defined
+				bestfit=SVMPoint(twoline[0]/twoline[2],twoline[1]/twoline[2]);
+			}
+			
+		}else{
+		//accumulate sums if more than two lines
+		M[1][1]+=c_result[0]*c_result[0];
+		M[1][2]+=c_result[0]*c_result[1];
+		M[1][3]+=c_result[0]*c_result[2];
+		M[2][1]+=c_result[0]*c_result[1];
+		M[2][2]+=c_result[1]*c_result[1];
+		M[2][3]+=c_result[1]*c_result[2];
+		M[3][1]+=c_result[0]*c_result[2];
+		M[3][2]+=c_result[1]*c_result[2];
+		M[3][3]+=c_result[2]*c_result[2];
+		}
+
+	}
+	
+	if(numLines!=2){
+		//jacobi decomposition
+		jacobi(M, 3, eigenvec, eigmatrix, &rot);
+		//find smallest eigenvalues
+		mineig=eigenvec[1];
+		minid=1;
+		if(mineig>eigenvec[2]){
+			mineig=eigenvec[2];
+			minid=2;
+		}
+		if(mineig>eigenvec[3]){
+			mineig=eigenvec[3];
+			minid=3;
+		}
+		for (i=0; i<3; i++) {
+		mineigvec[i] = eigmatrix[i+1][minid];
+		}
+
+		bestfit=SVMPoint(mineigvec[0]/mineigvec[2],mineigvec[1]/mineigvec[2]);
+	}
+
+//printf("TODO: svmmath.cpp:61\n"); 
+//fl_message("TODO: svmmath.cpp:61\n");
 
 	/******** END TODO ********/
-	
+		free_nrmatrix(M,1,3,1,3);
 	return bestfit;
 }
 
