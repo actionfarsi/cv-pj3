@@ -113,6 +113,7 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 		}else{
 		//	printf("not two lines \n");
 		//accumulate sums if more than two lines
+			//M matrix extra credit
 		M[1][1]+=c_result[0]*c_result[0];
 		M[1][2]+=c_result[0]*c_result[1];
 		M[1][3]+=c_result[0]*c_result[2];
@@ -173,11 +174,39 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 void ConvertToPlaneCoordinate(const vector<SVMPoint>& points, vector<Vec3d>& basisPts, double &uScale, double &vScale)
 {
 	int numPoints = points.size();
-
+	int j,k;
+	double dotsum=FLT_MAX;
+	Vec3d final_qr,final_pr;
+	Vec3d p,q,r;
+	printf("numpts:%d",numPoints);
 	/******** BEGIN TODO ********/
-printf("TODO: svmmath.cpp:101\n"); 
-fl_message("TODO: svmmath.cpp:101\n");
+//printf("TODO: svmmath.cpp:101\n"); 
+//fl_message("TODO: svmmath.cpp:101\n");
 
+		 //choose p,q,r from the points, will get 4 or more pts to work with
+		 //select first point as r
+		 r=Vec3d(points[0].u,points[0].v,points[0].w);
+		 //now loop through each of leftover point as p
+		 for(j=1; j<numPoints;j++){
+			 p=Vec3d(points[j].u,points[j].v,points[j].w);
+			 //find line pr
+			 Vec3d pr=cross(p,r);
+			 //now loop through left over points to make qr
+			 for(k=j+1; k<numPoints; k++){
+				 q=Vec3d(points[k].u,points[k].v,points[k].w);
+				 Vec3d qr=cross(q,r);
+				 //now find dot product, as close as 0
+				// dotsum= pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2];
+				 if(dotsum< pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2]){
+					dotsum= pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2];
+					//save current pr and qr
+					final_pr=pr;
+					final_qr=qr;
+				 }
+			 }
+		 }
+		printf("pr: [%f,%f], qr:[%f, %f]\n", final_pr[0],final_pr[1],final_qr[0],final_qr[1]);
+	
 	/******** END TODO ********/
 }
 
@@ -197,13 +226,15 @@ fl_message("TODO: svmmath.cpp:101\n");
 //
 void ComputeHomography(CTransform3x3 &H, CTransform3x3 &Hinv, const vector<SVMPoint> &points, vector<Vec3d> &basisPts, bool isRefPlane)
 {
-	int i;
+	int i,j;
 	int numPoints = (int) points.size();
+	printf("pts:%d",numPoints);
 	assert( numPoints >= 4 );
 
 	basisPts.clear();
 	if (isRefPlane) // reference plane
 	{
+		printf("ref plane\n");
 		for (i=0; i < numPoints; i++)
 		{
 			Vec3d tmp = Vec3d(points[i].X, points[i].Y, points[i].W); // was Z, not W
@@ -226,9 +257,36 @@ void ComputeHomography(CTransform3x3 &H, CTransform3x3 &Hinv, const vector<SVMPo
 
 	/******** BEGIN TODO ********/
 	// fill in the entries of A 
-printf("TODO: svmmath.cpp:187\n"); 
-fl_message("TODO: svmmath.cpp:187\n");
+//printf("TODO: svmmath.cpp:187\n"); 
+//fl_message("TODO: svmmath.cpp:187\n");
+	int n=0;
+	for(j=0;j<numRows; j+=2){
+		
+		A(j,0)=basisPts[n][0]; //x1
+		A(j,1)=basisPts[n][1]; //y1
+		A(j,2)=1;
+		A(j,3)=0;
+		A(j,4)=0;
+		A(j,5)=0;
 
+		A(j,6)=-points[n].u*basisPts[n][0]; //-x1'*x1
+		A(j,7)=-points[n].u*basisPts[n][1]; //-x1'*y1
+		A(j,8)=-points[n].u; //-x1'
+
+		//next row
+		A(j+1,0)=0;
+		A(j+1,1)=0;
+		A(j+1,2)=0;
+		A(j+1,3)=basisPts[n][0];
+		A(j+1,4)=basisPts[n][1];
+		A(j+1,5)=1;
+		A(j+1,6)=-points[n].v*basisPts[n][0];
+		A(j+1,7)=-points[n].v*basisPts[n][1];
+		A(j+1,8)=-points[n].v;
+		n++;
+
+	}
+	
 
 	/******** END TODO ********/
 
