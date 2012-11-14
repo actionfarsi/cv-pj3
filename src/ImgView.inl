@@ -42,14 +42,16 @@ void ImgView::sameXY()
 
 	// See the lecture note on measuring heights
 	// using a known point directly below the new point.
-	double t_b = (knownPoint.u-newPoint.u)*(knownPoint.u-newPoint.u) +
-				 (knownPoint.v-newPoint.v)*(knownPoint.v-newPoint.v);
-	double r_b = (knownPoint.u-refPointOffPlane->u)*(knownPoint.u-refPointOffPlane->u) +
-				 (knownPoint.v-refPointOffPlane->v)*(knownPoint.v-refPointOffPlane->v);
-	double v_r = (zVanish.u-refPointOffPlane->u)*(zVanish.u-refPointOffPlane->u) +
-				 (zVanish.v-refPointOffPlane->v)*(zVanish.v-refPointOffPlane->v);
-	double v_t = (zVanish.u-newPoint.u)*(zVanish.u-newPoint.u) +
-				 (zVanish.v-newPoint.v)*(zVanish.v-newPoint.v);
+	Vec3d nP = Vec3d(newPoint.u/newPoint.w, newPoint.v/newPoint.w, 1);
+	Vec3d kP = Vec3d(knownPoint.u/knownPoint.w, knownPoint.v/knownPoint.w, 1);
+	Vec3d rP = Vec3d(refPointOffPlane->u/refPointOffPlane->w,refPointOffPlane->u/refPointOffPlane->w, 1);
+
+	Vec3d zV = Vec3d(zVanish.u/zVanish.w, zVanish.v/zVanish.w, 1);
+
+	double t_b = (nP-kP)*(nP-kP)-1;
+	double r_b = (kP-rP)*(kP-rP)-1;
+	double v_r = (zV-rP)*(zV-rP)-1;
+	double v_t = (zV-nP)*(zV-nP)-1;
 	double h = sqrt(t_b/r_b * v_r/ v_t) * referenceHeight;
 
 	newPoint.X = knownPoint.X;
@@ -112,7 +114,7 @@ void ImgView::sameZPlane()
 		Vec3d vL = cross(cross(nP, kP), horizonL);
 		// 
 		Mat3d Hinv = Mat3d(Hinv);
-		Vec3d b0 = Hinv * Vec3d(knownPoint.X, knownPoint.Y, 0);
+		Vec3d b0 = Hinv * Vec3d(knownPoint.X, knownPoint.Y, 1);
 		// Intersection between vertical line and vanishing line on reference plane
 		b1 = cross(cross(b0, vL), vLine);
 	}

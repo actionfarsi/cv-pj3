@@ -31,13 +31,13 @@ void ImgView::solveForOppositeCorners(double u0, double v0, double u2, double v2
 	Vec3d yV = Vec3d(yVanish.u, yVanish.v, yVanish.w);
 	Vec3d zV = Vec3d(zVanish.u, zVanish.v, zVanish.w);
 	
-	Vec3d p1 = cross( cross(p0,xV), cross(p1,zV));
-	Vec3d p3 = cross( cross(p0,zV), cross(p1,xV));
+	Vec3d p1 = cross( cross(p0,xV), cross(p2,zV));
+	Vec3d p3 = cross( cross(p0,zV), cross(p2,xV));
 
 	u1 = p1[0]/p1[2];
-	u1 = p1[1]/p1[2];
+	v1 = p1[1]/p1[2];
 	u3 = p3[0]/p3[2];
-	u3 = p3[1]/p3[2];
+	v3 = p3[1]/p3[2];
 
     /********* END TODO ********/
 }
