@@ -189,11 +189,11 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 			minid=3;
 		}
 		//printf("mineig:%d\n",mineig);
-		printf("eigvec: ");
+	//	printf("eigvec: ");
 		for (i=0; i<3; i++) {
 
 		mineigvec[i] = eigmatrix[i+1][minid];
-		printf("%f\n",mineigvec[i]);
+		//printf("%f\n",mineigvec[i]);
 		}
 
 		bestfit=SVMPoint(mineigvec[0]/mineigvec[2]*globalW,mineigvec[1]/mineigvec[2]*globalW);
@@ -219,9 +219,11 @@ void ConvertToPlaneCoordinate(const vector<SVMPoint>& points, vector<Vec3d>& bas
 {
 	int numPoints = points.size();
 	int  i,j,k;
-	double dotsum=FLT_MAX;
-	Vec3d final_q,final_p;
-	Vec3d p,q,r;
+	int first=0;
+	double dotsum;
+	double lastsum=0;
+	Vec4d final_q;
+	Vec4d p,q,r;
 	printf("numpts:%d\n",numPoints);
 	/******** BEGIN TODO ********/
 //printf("TODO: svmmath.cpp:101\n"); 
@@ -229,42 +231,59 @@ void ConvertToPlaneCoordinate(const vector<SVMPoint>& points, vector<Vec3d>& bas
 	//printf("point1:%f\n",points[0].u,points[0].v,points[0].w);
 		 //choose p,q,r from the points, will get 4 or more pts to work with
 		 //select first point as r
-		 r=Vec3d(points[0].u,points[0].v,points[0].w);
-		 //now loop through each of leftover point as p
-		 for(j=1; j<numPoints;j++){
-			 p=Vec3d(points[j].u,points[j].v,points[j].w);
-			// find line pr
-			 Vec3d pr=cross(p,r);
+	
+		p=Vec4d(points[1].X,points[1].Y,points[1].Z,points[1].W);
+	//  printf("p:%f,%f,%f\n",p[0],p[1],p[2]);
+			 r=Vec4d(points[0].X,points[0].Y,points[0].Z,points[0].W);
+			//  printf("r:%f,%f,%f\n",r[0],r[1],r[2]);
+			// line pr
+			 Vec4d pr=p-r;
 			 //now loop through left over points to make qr
-			 for(k=j+1; k<numPoints; k++){
-				 q=Vec3d(points[k].u,points[k].v,points[k].w);
-				 Vec3d qr=cross(q,r);
+			
+			 for(k=2; k<numPoints; k++){
+				 q=Vec4d(points[k].X,points[k].Y,points[k].Z,points[k].W);
+				// printf("q:%f,%f,%f\n",q[0],q[1],q[2]);
+				 Vec4d qr=q-r;
+				  if(first==0){
+						final_q=q;
+						first=1;
+					 }
 				 //now find dot product, as close as 0
 				// dotsum= pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2];
-				 if(dotsum> pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2]){
-					dotsum= pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2];
-					//save current pr and qr
-					final_p=p;
-					final_q=q;
+				 int pr_m=sqrt(pr[0]*pr[0]+pr[1]*pr[1]+pr[2]*pr[2]+pr[3]*pr[3]);
+				 int qr_m=sqrt(qr[0]*qr[0]+qr[1]*qr[1]+qr[2]*qr[2]+qr[3]*qr[3]);
+				 printf("pr:%f,%f,%f qr:%f,%f,%f\n",pr[0],pr[1],pr[2],qr[0],qr[1],qr[2]);
+				// printf("result:%f",acos(pr[0]*qr[0]+pr[1]*qr[1]+pr[2]*qr[2]));
+				 dotsum=(pr[0]*qr[0]+pr[1]*qr[1]+pr[2]*qr[2]+pr[3]*qr[3])/(pr_m*qr_m);
+				 if(dotsum>1){
+					dotsum=1;
 				 }
+				 dotsum=acos(dotsum)*180/3.14;
+				 printf("angle: %f\n",dotsum);
+					 if(dotsum>lastsum && dotsum<=90){
+						lastsum=dotsum;
+						final_q=q;
+					 }
+					
 			 }
-		 }
-		 p=final_p;
+		
 		 q=final_q;
-		 Vec3d pr=cross(p,q);
-		  Vec3d qr=cross(r,q);
+		
+		  Vec4d qr=q-r;
 	//	printf("pr: [%f,%f], qr:[%f, %f]\n", final_p[0],final_p[1],final_q[0],final_q[1]);
-		Vec3d ex=Vec3d(pr[0]*pr[0],pr[1]*pr[1],pr[2]*pr[2]);// dot product of itself gives |p-r|^2
-		double ex_m=sqrt(ex[0]+ex[1]+ex[2]); //|p-r|
-		 ex=Vec3d(pr[0]/ex_m,pr[1]/ex_m,pr[2]/ex_m);
+		Vec4d ex=Vec4d(pr[0]*pr[0],pr[1]*pr[1],pr[2]*pr[2],pr[3]*pr[3]);// dot product of itself gives |p-r|^2
+		double ex_m=sqrt(ex[0]+ex[1]+ex[2]+ex[3]); //|p-r|
+		 ex=Vec4d(pr[0]/ex_m,pr[1]/ex_m,pr[2]/ex_m,pr[3]/ex_m);
 
-       Vec3d s=Vec3d(ex[0]*ex[0]*qr[0],ex[1]*ex[1]*qr[1],ex[2]*ex[2]*qr[2]);
+		 double sum=ex[0]*qr[0]+ex[1]*qr[1]+ex[2]*qr[2]+ex[3]*qr[3];
+		 Vec4d s=Vec4d(ex[0]*sum,ex[1]*sum,ex[2]*sum,ex[3]*sum);
 	
-		Vec3d t=qr-s;
-		Vec3d ey=Vec3d(t[0]*t[0],t[1]*t[1],t[2]*t[2]);
+		Vec4d t=qr-s;
+		Vec4d ey=Vec4d(t[0]*t[0],t[1]*t[1],t[2]*t[2],t[3]*t[3]);
 
-		double t_m=sqrt(ey[0]+ey[1]+ey[2]);
-		ey=Vec3d(t[0]/t_m,t[1]/t_m,t[2]/t_m);
+		double t_m=sqrt(ey[0]+ey[1]+ey[2]+ey[3]);
+		ey=Vec4d(t[0]/t_m,t[1]/t_m,t[2]/t_m,t[3]/t_m);
+
 		double min_u=FLT_MAX;
 		double min_v=FLT_MAX;
 		double max_u=0;
@@ -272,10 +291,10 @@ void ConvertToPlaneCoordinate(const vector<SVMPoint>& points, vector<Vec3d>& bas
 		////loop through all points
 
 		for(i=0; i<numPoints; i++){
-			Vec3d a=Vec3d(points[i].u,points[i].v,points[i].w);
-			Vec3d ar=cross(a,r);
+			Vec4d a=Vec4d(points[i].X,points[i].Y,points[i].Z,points[i].W);
+			Vec4d ar=a-r;
 			
-			Vec3d tmp = Vec3d(ar[0]*ex[0]+ar[1]*ex[1]+ar[2]*ex[2],ar[0]*ey[0]+ar[1]*ey[1]+ar[2]*ey[2],1);
+			Vec3d tmp = Vec3d(ar[0]*ex[0]+ar[1]*ex[1]+ar[2]*ex[2]+ar[3]*ex[3],ar[0]*ey[0]+ar[1]*ey[1]+ar[2]*ey[2]+ar[3]*ey[3],1);
 			basisPts.push_back(tmp);
 			if(min_u>basisPts[i][0]){
 			
@@ -296,7 +315,7 @@ void ConvertToPlaneCoordinate(const vector<SVMPoint>& points, vector<Vec3d>& bas
 		}
 		uScale=max_u-min_u;
 		vScale=max_v-min_v;
-		printf("%f\n",basisPts[1][1]);
+	
 		
 			/******** END TODO ********/
 }
