@@ -17,7 +17,7 @@
 #include <cstdio>
 #include <assert.h>
 #include <iostream>
-
+#include <math.h>
 #include "Eigen/Core"
 #include "MinEig.h"
 
@@ -47,7 +47,7 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 	typedef Matrix<double, Dynamic, 3, RowMajor> Matrix3;
 	//mineig defs
 	double **eigmatrix, *eigenvec, mineig, *mineigvec;
-	int rot;
+	int rot,i;
     int minid; //id for mineig
 	
 	int numLines = (int) lines.size();
@@ -62,10 +62,52 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 	// Note: Function to find eigenvector with smallest eigenvalue is MinEig(A, eval, evec)
 	//
 	/******** BEGIN TODO ********/
+	//double eval;
+	//double **M = nrmatrix( 1,numLines,1,3);
+	//int linecount=1;
+	//eigmatrix = nrmatrix(1,numLines,1,3);
+	//eigenvec = nrvector(1,3);
+	//	mineigvec = nrvector(1,3);
+	//for (iter = lines.begin(); iter != lines.end(); iter++) {
+	//	SVMPoint *e1,*e2;
 
+	//	e1=iter->pnt1;
+	//	e2=iter->pnt2;
+	//	Vec3d p1=Vec3d(e1->u,e1->v,globalW);
+	//	Vec3d p2=Vec3d(e2->u,e2->v,globalW);
+	//	Vec3d line=cross(p1,p2);
+	//	//A(linecount,0)=line[0];
+	////	A(linecount,1)=line[1];
+	////	A(linecount,2)=line[2];
+	//	M[linecount][0]=line[0];
+	//	M[linecount][1]=line[1];
+	//	M[linecount][2]=line[2];
+	//	linecount++;
+	//}
+	////find smallest eigenvalues
+
+	//jacobi(M,numLines, eigenvec, eigmatrix, &rot);
+	//	mineig=eigenvec[1];
+	//	minid=1;
+	//	if(mineig>eigenvec[2]){
+	//		mineig=eigenvec[2];
+	//		minid=2;
+	//	}
+	//	if(mineig>eigenvec[3]){
+	//		mineig=eigenvec[3];
+	//		minid=3;
+	//	}
+	//	printf("mineig:%d\n",mineig);
+	//	printf("eigvec: ");
+	//	for (i=0; i<3; i++) {
+
+	//	mineigvec[i] = eigmatrix[i+1][minid];
+	//	printf("%f\n",mineigvec[i]);
+	//	}
+	//MinEig(A,eval,evec);
 	//define blank matrix M for best fit procedure
 	double **M = nrmatrix(1,3,1,3);
-	int i, j;
+	int  j;
 	for (i=1; i<=3; i++)
 	{
 		for (j=1; j<=3; j++)
@@ -133,6 +175,8 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 		mineigvec = nrvector(1,3);
 		//jacobi decomposition
 		jacobi(M, 3, eigenvec, eigmatrix, &rot);
+
+	
 		//find smallest eigenvalues
 		mineig=eigenvec[1];
 		minid=1;
@@ -156,10 +200,10 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 	}
 //printf("w:%d, h:%d\n",imgWidth,imgHeight); 
 //printf("TODO: svmmath.cpp:61\n"); 
-//fl_message("TODO: svmmath.cpp:61\n");
-
+////fl_message("TODO: svmmath.cpp:61\n");
+//
 	/******** END TODO ********/
-		free_nrmatrix(M,1,3,1,3);
+		free_nrmatrix(M, 1,numLines,1,3);
 	return bestfit;
 }
 
@@ -174,22 +218,22 @@ SVMPoint BestFitIntersect(const std::list<SVMLine> &lines, int imgWidth, int img
 void ConvertToPlaneCoordinate(const vector<SVMPoint>& points, vector<Vec3d>& basisPts, double &uScale, double &vScale)
 {
 	int numPoints = points.size();
-	int j,k;
+	int  i,j,k;
 	double dotsum=FLT_MAX;
-	Vec3d final_qr,final_pr;
+	Vec3d final_q,final_p;
 	Vec3d p,q,r;
-	printf("numpts:%d",numPoints);
+	printf("numpts:%d\n",numPoints);
 	/******** BEGIN TODO ********/
 //printf("TODO: svmmath.cpp:101\n"); 
 //fl_message("TODO: svmmath.cpp:101\n");
-
+	//printf("point1:%f\n",points[0].u,points[0].v,points[0].w);
 		 //choose p,q,r from the points, will get 4 or more pts to work with
 		 //select first point as r
 		 r=Vec3d(points[0].u,points[0].v,points[0].w);
 		 //now loop through each of leftover point as p
 		 for(j=1; j<numPoints;j++){
 			 p=Vec3d(points[j].u,points[j].v,points[j].w);
-			 //find line pr
+			// find line pr
 			 Vec3d pr=cross(p,r);
 			 //now loop through left over points to make qr
 			 for(k=j+1; k<numPoints; k++){
@@ -197,17 +241,64 @@ void ConvertToPlaneCoordinate(const vector<SVMPoint>& points, vector<Vec3d>& bas
 				 Vec3d qr=cross(q,r);
 				 //now find dot product, as close as 0
 				// dotsum= pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2];
-				 if(dotsum< pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2]){
+				 if(dotsum> pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2]){
 					dotsum= pr[0]*qr[0]+ pr[1]*qr[1]+ pr[2]*qr[2];
 					//save current pr and qr
-					final_pr=pr;
-					final_qr=qr;
+					final_p=p;
+					final_q=q;
 				 }
 			 }
 		 }
-		printf("pr: [%f,%f], qr:[%f, %f]\n", final_pr[0],final_pr[1],final_qr[0],final_qr[1]);
+		 p=final_p;
+		 q=final_q;
+		 Vec3d pr=cross(p,q);
+		  Vec3d qr=cross(r,q);
+	//	printf("pr: [%f,%f], qr:[%f, %f]\n", final_p[0],final_p[1],final_q[0],final_q[1]);
+		Vec3d ex=Vec3d(pr[0]*pr[0],pr[1]*pr[1],pr[2]*pr[2]);// dot product of itself gives |p-r|^2
+		double ex_m=sqrt(ex[0]+ex[1]+ex[2]); //|p-r|
+		 ex=Vec3d(pr[0]/ex_m,pr[1]/ex_m,pr[2]/ex_m);
+
+       Vec3d s=Vec3d(ex[0]*ex[0]*qr[0],ex[1]*ex[1]*qr[1],ex[2]*ex[2]*qr[2]);
 	
-	/******** END TODO ********/
+		Vec3d t=qr-s;
+		Vec3d ey=Vec3d(t[0]*t[0],t[1]*t[1],t[2]*t[2]);
+
+		double t_m=sqrt(ey[0]+ey[1]+ey[2]);
+		ey=Vec3d(t[0]/t_m,t[1]/t_m,t[2]/t_m);
+		double min_u=FLT_MAX;
+		double min_v=FLT_MAX;
+		double max_u=0;
+			double max_v=0;
+		////loop through all points
+
+		for(i=0; i<numPoints; i++){
+			Vec3d a=Vec3d(points[i].u,points[i].v,points[i].w);
+			Vec3d ar=cross(a,r);
+			
+			Vec3d tmp = Vec3d(ar[0]*ex[0]+ar[1]*ex[1]+ar[2]*ex[2],ar[0]*ey[0]+ar[1]*ey[1]+ar[2]*ey[2],1);
+			basisPts.push_back(tmp);
+			if(min_u>basisPts[i][0]){
+			
+				min_u=basisPts[i][0];
+			}			
+			if(max_u<basisPts[i][0]){
+				max_u=basisPts[i][0];
+			}
+			//basisPts[i][1]=ar[0]*ey[0]+ar[1]*ey[1]+ar[2]*ey[2];
+
+			if(min_v>basisPts[i][1]){
+				min_v=basisPts[i][1];
+			}
+			if(max_u<basisPts[i][1]){
+				max_v=basisPts[i][1];
+			}
+
+		}
+		uScale=max_u-min_u;
+		vScale=max_v-min_v;
+		printf("%f\n",basisPts[1][1]);
+		
+			/******** END TODO ********/
 }
 
 
@@ -243,6 +334,7 @@ void ComputeHomography(CTransform3x3 &H, CTransform3x3 &Hinv, const vector<SVMPo
 	} 
 	else // arbitrary polygon
 	{
+			printf("polygon\n");
         double uScale, vScale; // unused in this function
 		ConvertToPlaneCoordinate(points, basisPts, uScale, vScale);
 	}
