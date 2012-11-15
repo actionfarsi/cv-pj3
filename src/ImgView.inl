@@ -96,6 +96,15 @@ void ImgView::sameZPlane()
 	}
 
 	/******** BEGIN TODO ********/
+	Mat3d mHinv = Mat3d(Hinv[0][0],Hinv[0][1],Hinv[0][2],
+							Hinv[1][0],Hinv[1][1],Hinv[1][2],
+							Hinv[2][0],Hinv[2][1],Hinv[2][2]);
+
+	Mat3d mH = Mat3d(H[0][0],H[0][1],H[0][2],
+					 H[1][0],H[1][1],H[1][2],
+					 H[2][0],H[2][1],H[2][2]);
+
+
 	Vec3d nP = Vec3d(newPoint.u, newPoint.v, newPoint.w);
 	Vec3d kP = Vec3d(knownPoint.u, knownPoint.v, knownPoint.w);
 
@@ -113,18 +122,17 @@ void ImgView::sameZPlane()
 		// Vanishing point
 		Vec3d vL = cross(cross(nP, kP), horizonL);
 		// 
-		Mat3d Hinv = Mat3d(Hinv);
-		Vec3d b0 = Hinv * Vec3d(knownPoint.X, knownPoint.Y, 1);
+		Vec3d b0 = mH * Vec3d(knownPoint.X, knownPoint.Y, 1);
 		// Intersection between vertical line and vanishing line on reference plane
 		b1 = cross(cross(b0, vL), vLine);
 	}
 	// Use homography
-	Mat3d H = Mat3d(H);
-	nP = H * b1;
 	
-	newPoint.X = nP[0];
-	newPoint.Y = nP[1];
-	newPoint.Z = nP[2];
+	nP = mHinv * b1;
+	
+	newPoint.X = nP[0]/nP[2];
+	newPoint.Y = nP[1]/nP[2];
+	newPoint.Z = knownPoint.Z;
 	newPoint.W = 1;
 	
 	/******** END TODO ********/

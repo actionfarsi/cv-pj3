@@ -36,9 +36,37 @@ void ImgView::computeCameraParameters()
     double z_cam = 0.0;
     double x_cam = 0.0, y_cam = 0.0;
 
-printf("TODO: camera.cpp:39\n"); 
-fl_message("TODO: camera.cpp:39\n");
+	Mat3d mH = Mat3d(H[0][0],H[0][1],H[0][2],
+					 H[1][0],H[1][1],H[1][2],
+					 H[2][0],H[2][1],H[2][2]);
+	Vec3d xV = Vec3d(xVanish.u, xVanish.v, xVanish.w);
+	Vec3d yV = Vec3d(yVanish.u, yVanish.v, yVanish.w);
+	Vec3d zV = Vec3d(zVanish.u, zVanish.v, zVanish.w);
 
+	Vec3d rP = Vec3d(refPointOffPlane->u/refPointOffPlane->w,refPointOffPlane->v/refPointOffPlane->w, 1);
+	// Base point of reference line
+	Vec3d r0P = mH * Vec3d(refPointOffPlane->X, refPointOffPlane->Y, 1);
+	// Homogenize point
+	r0P[0] = r0P[0]/r0P[2];
+	r0P[1] = r0P[1]/r0P[2];
+	r0P[2] = 1;
+
+	//Intersection of ruler/reference line and horizon
+	Vec3d hP = cross(cross(xV,yV), cross(rP,r0P) );
+	// Calculate height using proportion
+	// z_cam = referenceHeight * sqrt(((rP-r0P)*(rP-r0P) - 1)/((hP-r0P)*(hP-r0P)-1));
+
+	// Xy are the same of the Z vanishing point
+	SVMPoint cameraPoint(hP[0]/hP[2],hP[1]/hP[2]);
+	
+	pntSelStack.push_back(&zVanish);
+	pntSelStack.push_back(&cameraPoint);
+	sameZPlane();
+	pntSelStack.pop_back();
+	pntSelStack.pop_back();
+
+	x_cam = cameraPoint.X;
+	y_cam = cameraPoint.Y;
 
     /******** END TODO Part 1 ********/
 
