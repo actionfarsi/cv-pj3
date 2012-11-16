@@ -66,7 +66,7 @@ void ImgView::computeCameraParameters()
 	r0Point.known(true);
 		
     // Xy are the same of the Z vanishing point
-	SVMPoint cameraPoint(hP[0]/hP[2],hP[1]/hP[2]);
+	SVMPoint cameraPoint(zV[0]/zV[2],zV[1]/zV[2]);
 	//cameraPoint.X = zVanish.X;
 	//cameraPoint.Y = zVanish.Y;
 
@@ -76,6 +76,7 @@ void ImgView::computeCameraParameters()
 	sameXY();
 	pntSelStack.pop_back();
 	pntSelStack.pop_back();
+
 	pntSelStack.push_back(&r0Point);
 	pntSelStack.push_back(&cameraPoint);
 	sameZPlane();
