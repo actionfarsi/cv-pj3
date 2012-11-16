@@ -44,14 +44,14 @@ void ImgView::sameXY()
 	// using a known point directly below the new point.
 	Vec3d nP = Vec3d(newPoint.u/newPoint.w, newPoint.v/newPoint.w, 1);
 	Vec3d kP = Vec3d(knownPoint.u/knownPoint.w, knownPoint.v/knownPoint.w, 1);
-	Vec3d rP = Vec3d(refPointOffPlane->u/refPointOffPlane->w,refPointOffPlane->u/refPointOffPlane->w, 1);
+	Vec3d rP = Vec3d(refPointOffPlane->u/refPointOffPlane->w,refPointOffPlane->v/refPointOffPlane->w, 1);
 
 	Vec3d zV = Vec3d(zVanish.u/zVanish.w, zVanish.v/zVanish.w, 1);
 
-	double t_b = (nP-kP)*(nP-kP)-1;
-	double r_b = (kP-rP)*(kP-rP)-1;
-	double v_r = (zV-rP)*(zV-rP)-1;
-	double v_t = (zV-nP)*(zV-nP)-1;
+	double t_b = (nP-kP)*(nP-kP);
+	double r_b = (kP-rP)*(kP-rP);
+	double v_r = (zV-rP)*(zV-rP);
+	double v_t = (zV-nP)*(zV-nP);
 	double h = sqrt(t_b/r_b * v_r/ v_t) * referenceHeight;
 
 	newPoint.X = knownPoint.X;
@@ -121,12 +121,20 @@ void ImgView::sameZPlane()
 		Vec3d horizonL = cross(xV, yV);
 		// Vanishing point
 		Vec3d vL = cross(cross(nP, kP), horizonL);
-		// 
+		
 		Vec3d b0 = mH * Vec3d(knownPoint.X, knownPoint.Y, 1);
 		// Intersection between vertical line and vanishing line on reference plane
-		b1 = cross(cross(b0, vL), vLine);
+		if(vL*vL==0){
+			b1= cross(horizonL,vLine);
+		}else{
+			b1 = cross(cross(b0, vL), vLine);
+		}
+		
 	}
 	// Use homography
+	b1[0]=b1[0]/b1[2];
+	b1[1]=b1[1]/b1[2];
+	b1[2]=b1[2]/b1[2];
 	
 	nP = mHinv * b1;
 	

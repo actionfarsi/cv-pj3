@@ -53,13 +53,30 @@ void ImgView::computeCameraParameters()
 
 	//Intersection of ruler/reference line and horizon
 	Vec3d hP = cross(cross(xV,yV), cross(rP,r0P) );
-	// Calculate height using proportion
-	// z_cam = referenceHeight * sqrt(((rP-r0P)*(rP-r0P) - 1)/((hP-r0P)*(hP-r0P)-1));
-
-	// Xy are the same of the Z vanishing point
+	// Calculate height using proportion 
+	hP[0] = hP[0]/hP[2];
+	hP[1] = hP[1]/hP[2];
+	hP[2] = 1;
+	//z_cam = referenceHeight * sqrt(((rP-r0P)*(rP-r0P) - 1)/((hP-r0P)*(hP-r0P)-1));
+	SVMPoint hPoint(hP[0]/hP[2],hP[1]/hP[2]);
+	SVMPoint r0Point(r0P[0]/r0P[2],r0P[1]/r0P[2]);
+	r0Point.X = refPointOffPlane->X;
+	r0Point.Y = refPointOffPlane->Y;
+	r0Point.Z = 0;
+	r0Point.known(true);
+		
+    // Xy are the same of the Z vanishing point
 	SVMPoint cameraPoint(hP[0]/hP[2],hP[1]/hP[2]);
+	//cameraPoint.X = zVanish.X;
+	//cameraPoint.Y = zVanish.Y;
+
+	pntSelStack.push_back(&r0Point);
+	pntSelStack.push_back(&hPoint);
 	
-	pntSelStack.push_back(&zVanish);
+	sameXY();
+	pntSelStack.pop_back();
+	pntSelStack.pop_back();
+	pntSelStack.push_back(&r0Point);
 	pntSelStack.push_back(&cameraPoint);
 	sameZPlane();
 	pntSelStack.pop_back();
@@ -67,6 +84,7 @@ void ImgView::computeCameraParameters()
 
 	x_cam = cameraPoint.X;
 	y_cam = cameraPoint.Y;
+	z_cam = hPoint.Z;
 
     /******** END TODO Part 1 ********/
 
